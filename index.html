@@ -375,12 +375,12 @@
             <canvas id="poemChart"></canvas>
         </div>
 
-        <div class="stats-list" id="statsList"></div>
-
         <div class="total-section">
             <div class="total-label">TOTAL POEMS</div>
             <div class="total-count" id="totalCount">0</div>
         </div>
+
+        <div class="stats-list" id="statsList"></div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -503,9 +503,24 @@
             new Chart(ctx, config);
         }
 
+        function animateNumber(el, to) {
+            let start = 0;
+            const duration = 1200;
+            const step = Math.ceil(to / (duration / 16));
+            const interval = setInterval(() => {
+                start += step;
+                if (start >= to) {
+                    el.textContent = to;
+                    clearInterval(interval);
+                } else {
+                    el.textContent = start;
+                }
+            }, 16);
+        }
+
         // Initialize
         const { percentages, total } = calculatePercentages(poemData);
-        document.getElementById('totalCount').textContent = total;
+        animateNumber(document.getElementById('totalCount'), total);
         createStatsList(poemData, percentages);
         createChart(poemData, percentages);
     </script>
