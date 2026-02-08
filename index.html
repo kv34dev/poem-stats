@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Статистика Стихов</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            background: linear-gradient(135deg, #FFF5E6 0%, #FFE8D6 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            padding: 60px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            max-width: 900px;
+            width: 100%;
+        }
+
+        h1 {
+            font-size: 48px;
+            color: #D4978C;
+            text-align: center;
+            margin-bottom: 50px;
+            letter-spacing: 2px;
+            font-weight: 300;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto 50px;
+        }
+
+        canvas {
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        canvas:hover {
+            transform: scale(1.02);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 25px;
+            margin-top: 40px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #FFEEF0 0%, #FFE8D6 100%);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(212, 151, 140, 0.2);
+            border-color: #D4978C;
+        }
+
+        .stat-card.active {
+            border-color: #D4978C;
+            background: linear-gradient(135deg, #FFE8D6 0%, #FFEEF0 100%);
+        }
+
+        .language-name {
+            font-size: 24px;
+            color: #C89085;
+            margin-bottom: 15px;
+            font-weight: 400;
+        }
+
+        .poem-count {
+            font-size: 52px;
+            color: #B07D73;
+            font-weight: 300;
+            margin-bottom: 10px;
+        }
+
+        .percentage {
+            font-size: 28px;
+            color: #D4978C;
+            font-weight: 300;
+        }
+
+        .total-section {
+            text-align: center;
+            margin-top: 50px;
+            padding: 30px;
+            background: linear-gradient(135deg, #FFE8D6 0%, #FFEEF0 100%);
+            border-radius: 20px;
+        }
+
+        .total-label {
+            font-size: 28px;
+            color: #C89085;
+            margin-bottom: 15px;
+        }
+
+        .total-count {
+            font-size: 64px;
+            color: #B07D73;
+            font-weight: 300;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 40px 30px;
+            }
+
+            h1 {
+                font-size: 36px;
+            }
+
+            .poem-count {
+                font-size: 42px;
+            }
+
+            .percentage {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>МОИ СТИХИ</h1>
+        
+        <div class="chart-container">
+            <canvas id="poemChart"></canvas>
+        </div>
+
+        <div class="stats-grid" id="statsGrid"></div>
+
+        <div class="total-section">
+            <div class="total-label">ВСЕГО СТИХОВ</div>
+            <div class="total-count" id="totalCount">0</div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // ============================================
+        // ЗДЕСЬ ИЗМЕНЯТЬ КОЛИ-ВО СТИХОВ
+        // ============================================
+        const poemData = {
+            'Русский': 42,
+            'Английский': 9,
+            'Французский': 1,
+            'Испанский': 1
+        };
+        // ============================================
+
+        const colors = {
+            'Русский': '#FFB3BA',
+            'Английский': '#FFDFBA',
+            'Французский': '#FFFFBA',
+            'Испанский': '#BAFFC9'
+        };
+
+        function calculatePercentages(data) {
+            const total = Object.values(data).reduce((sum, val) => sum + val, 0);
+            const percentages = {};
+            
+            for (let lang in data) {
+                percentages[lang] = total > 0 ? ((data[lang] / total) * 100).toFixed(1) : 0;
+            }
+            
+            return { percentages, total };
+        }
+
+        function createStatsCards(data, percentages) {
+            const grid = document.getElementById('statsGrid');
+            grid.innerHTML = '';
+            
+            Object.keys(data).forEach(lang => {
+                const card = document.createElement('div');
+                card.className = 'stat-card';
+                card.innerHTML = `
+                    <div class="language-name">${lang}</div>
+                    <div class="poem-count">${data[lang]}</div>
+                    <div class="percentage">${percentages[lang]}%</div>
+                `;
+                
+                card.addEventListener('mouseenter', () => {
+                    card.classList.add('active');
+                });
+                
+                card.addEventListener('mouseleave', () => {
+                    card.classList.remove('active');
+                });
+                
+                grid.appendChild(card);
+            });
+        }
+
+        function createChart(data, percentages) {
+            const ctx = document.getElementById('poemChart').getContext('2d');
+            
+            const chartData = {
+                labels: Object.keys(data),
+                datasets: [{
+                    data: Object.values(data),
+                    backgroundColor: Object.keys(data).map(lang => colors[lang]),
+                    borderColor: '#FFFFFF',
+                    borderWidth: 4,
+                    hoverOffset: 15
+                }]
+            };
+
+            const config = {
+                type: 'doughnut',
+                data: chartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            titleColor: '#B07D73',
+                            bodyColor: '#C89085',
+                            borderColor: '#D4978C',
+                            borderWidth: 2,
+                            padding: 15,
+                            bodyFont: {
+                                size: 18,
+                                family: 'Georgia'
+                            },
+                            titleFont: {
+                                size: 20,
+                                family: 'Georgia'
+                            },
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    const percentage = percentages[label];
+                                    return `${value} стихов (${percentage}%)`;
+                                }
+                            }
+                        }
+                    },
+                    animation: {
+                        animateRotate: true,
+                        animateScale: true,
+                        duration: 2000,
+                        easing: 'easeInOutQuart'
+                    },
+                    cutout: '65%'
+                }
+            };
+
+            new Chart(ctx, config);
+        }
+
+        // Инициализация
+        const { percentages, total } = calculatePercentages(poemData);
+        document.getElementById('totalCount').textContent = total;
+        createStatsCards(poemData, percentages);
+        createChart(poemData, percentages);
+    </script>
+</body>
+</html>
