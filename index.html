@@ -89,6 +89,10 @@
             text-shadow: 0 2px 10px rgba(91, 155, 198, 0.3);
         }
 
+        .section-divider {
+            margin-top: 80px;
+        }
+
         .chart-container {
             position: relative;
             width: 100%;
@@ -244,6 +248,10 @@
                 letter-spacing: 3px;
             }
 
+            .section-divider {
+                margin-top: 60px;
+            }
+
             .chart-container {
                 max-width: 280px;
                 margin-bottom: 40px;
@@ -326,6 +334,10 @@
                 font-size: 64px;
             }
 
+            .section-divider {
+                margin-top: 100px;
+            }
+
             .chart-container {
                 max-width: 400px;
             }
@@ -367,22 +379,30 @@
     <div class="background"></div>
     
     <div class="container">
+        <!-- LANGUAGES SECTION -->
         <h1>MY POETRY</h1>
         
         <div class="chart-container">
-            <canvas id="poemChart"></canvas>
+            <canvas id="languageChart"></canvas>
         </div>
 
         <div class="total-section">
             <div class="total-label">TOTAL POEMS</div>
-            <div class="total-count" id="totalCount">0</div>
+            <div class="total-count" id="languageTotalCount">0</div>
         </div>
 
-        <div class="stats-list" id="statsList"></div>
+        <div class="stats-list" id="languageStatsList"></div>
 
+        <!-- TOPICS SECTION -->
+        <div class="section-divider">
+            <h1 >TOPICS</h1>
+            
+            <div class="chart-container">
+                <canvas id="topicsChart"></canvas>
+            </div>
 
-        <h1 style="padding-top: 40px;">Topics</h1>
-
+            <div class="stats-list" id="topicsStatsList"></div>
+        </div>
 
         <div class="glass-title">Last updated: 08.02.2026</div>
     </div>
@@ -392,19 +412,37 @@
         // ============================================
         // CHANGE POEM COUNTS HERE
         // ============================================
-        const poemData = {
+        const languageData = {
             'Russian': 42,
             'English': 9,
             'French': 1,
             'Spanish': 1
         };
+
+        const topicsData = {
+            'Love': 43,
+            'Personal': 4,
+            'Philosophy': 3,
+            'War': 1,
+            'Nature': 1,
+            'Spiritual': 1
+        };
         // ============================================
 
-        const colors = {
+        const languageColors = {
             'Russian': 'rgba(184, 216, 232, 0.8)',
             'English': 'rgba(163, 207, 223, 0.8)',
             'French': 'rgba(135, 206, 235, 0.8)',
             'Spanish': 'rgba(107, 182, 214, 0.8)'
+        };
+
+        const topicsColors = {
+            'Love': 'rgba(184, 216, 232, 0.8)',
+            'War': 'rgba(163, 207, 223, 0.8)',
+            'Philosophy': 'rgba(135, 206, 235, 0.8)',
+            'Nature': 'rgba(107, 182, 214, 0.8)',
+            'Personal': 'rgba(91, 155, 198, 0.8)',
+            'Spiritual': 'rgba(74, 138, 179, 0.8)'
         };
 
         function calculatePercentages(data) {
@@ -418,8 +456,8 @@
             return { percentages, total };
         }
 
-        function createStatsList(data, percentages) {
-            const list = document.getElementById('statsList');
+        function createStatsList(data, percentages, listId) {
+            const list = document.getElementById(listId);
             list.innerHTML = '';
             
             Object.keys(data).forEach(lang => {
@@ -445,8 +483,8 @@
             });
         }
 
-        function createChart(data, percentages) {
-            const ctx = document.getElementById('poemChart').getContext('2d');
+        function createChart(data, percentages, canvasId, colors) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
             
             const chartData = {
                 labels: Object.keys(data),
@@ -522,11 +560,17 @@
             }, 16);
         }
 
-        // Initialize
-        const { percentages, total } = calculatePercentages(poemData);
-        animateNumber(document.getElementById('totalCount'), total);
-        createStatsList(poemData, percentages);
-        createChart(poemData, percentages);
+        // Initialize Languages Section
+        const languageStats = calculatePercentages(languageData);
+        animateNumber(document.getElementById('languageTotalCount'), languageStats.total);
+        createStatsList(languageData, languageStats.percentages, 'languageStatsList');
+        createChart(languageData, languageStats.percentages, 'languageChart', languageColors);
+
+        // Initialize Topics Section
+        const topicsStats = calculatePercentages(topicsData);
+        animateNumber(document.getElementById('topicsTotalCount'), topicsStats.total);
+        createStatsList(topicsData, topicsStats.percentages, 'topicsStatsList');
+        createChart(topicsData, topicsStats.percentages, 'topicsChart', topicsColors);
     </script>
 </body>
 </html>
